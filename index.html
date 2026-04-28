@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Journal</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c24;
+    --border: #1e2330;
+    --forex: #00e5a0;
+    --crypto: #7b6ff0;
+    --win: #00e5a0;
+    --loss: #ff4d6d;
+    --text: #e8ecf4;
+    --muted: #5a6278;
+    --accent: #f0c040;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .logo {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+
+  .logo span { color: var(--accent); }
+
+  .badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .tab.active-forex { background: var(--forex); color: #000; border-color: var(--forex); }
+  .tab.active-crypto { background: var(--crypto); color: #fff; border-color: var(--crypto); }
+  .tab.active-all { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  /* STAT CARDS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .stat-card.forex::before { background: var(--forex); }
+  .stat-card.crypto::before { background: var(--crypto); }
+  .stat-card.win::before { background: var(--win); }
+  .stat-card.loss::before { background: var(--loss); }
+  .stat-card.neutral::before { background: var(--accent); }
+
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+  }
+
+  .stat-value.green { color: var(--win); }
+  .stat-value.red { color: var(--loss); }
+  .stat-value.gold { color: var(--accent); }
+  .stat-value.blue { color: var(--crypto); }
+
+  /* CHARTS SECTION */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  @media (max-width: 640px) {
+    .charts-row { grid-template-columns: 1fr; }
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .chart-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  canvas { width: 100% !important; }
+
+  /* FORM */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 28px;
+  }
+
+  .form-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .form-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .field label {
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .field input, .field select, .field textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .field select option { background: var(--surface2); }
+
+  .btn-add {
+    padding: 12px 28px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .btn-add:hover { opacity: 0.85; }
+
+  /* TRADE LOG */
+  .log-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .log-title {
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .filter-btns {
+    display: flex;
+    gap: 8px;
+  }
+
+  .filter-btn {
+    padding: 6px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    transition: all 0.15s;
+  }
+
+  .filter-btn.f-active { background: var(--forex); color: #000; border-color: var(--forex); }
+  .filter-btn.c-active { background: var(--crypto); color: #fff; border-color: var(--crypto); }
+  .filter-btn.a-active { background: var(--surface2); color: var(--text); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  th {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 12px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  .market-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .market-badge.forex { background: rgba(0,229,160,0.15); color: var(--forex); }
+  .market-badge.crypto { background: rgba(123,111,240,0.15); color: var(--crypto); }
+
+  .result-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .result-badge.win { background: rgba(0,229,160,0.15); color: var(--win); }
+  .result-badge.loss { background: rgba(255,77,109,0.15); color: var(--loss); }
+
+  .pnl-pos { color: var(--win); font-weight: 700; }
+  .pnl-neg { color: var(--loss); font-weight: 700; }
+
+  .del-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: color 0.2s;
+  }
+  .del-btn:hover { color: var(--loss); }
+
+  .empty-state {
+    text-align: center;
+    color: var(--muted);
+    padding: 40px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+  }
+
+  /* WINRATE BAR */
+  .winrate-bar {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .winrate-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 28px 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Trade<span>Journal</span></div>
+  <div class="badge">FOREX & CRYPTO</div>
+</header>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active-all" onclick="setTab('all')">📊 Overview</button>
+  <button class="tab" onclick="setTab('forex')">💱 Forex</button>
+  <button class="tab" onclick="setTab('crypto')">₿ Crypto</button>
+</div>
+
+<!-- STATS -->
+<div class="stats-grid" id="statsGrid"></div>
+
+<!-- CHARTS -->
+<div class="charts-row">
+  <div class="chart-card">
+    <div class="chart-title">Win / Loss Ratio</div>
+    <canvas id="pieChart" height="220"></canvas>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">P&L by Market</div>
+    <canvas id="barChart" height="220"></canvas>
+  </div>
+</div>
+
+<!-- ADD TRADE FORM -->
+<div class="form-card">
+  <div class="form-title"><span class="dot"></span> Add New Trade</div>
+  <div class="form-grid">
+    <div class="field">
+      <label>Market</label>
+      <select id="fMarket">
+        <option value="forex">Forex</option>
+        <option value="crypto">Crypto</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Pair / Symbol</label>
+      <input type="text" id="fPair" placeholder="EUR/USD, BTC/USD...">
+    </div>
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="fDate">
+    </div>
+    <div class="field">
+      <label>Result</label>
+      <select id="fResult">
+        <option value="win">Win ✅</option>
+        <option value="loss">Loss ❌</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>P&L ($)</label>
+      <input type="number" id="fPnl" placeholder="e.g. 150 or -80">
+    </div>
+    <div class="field">
+      <label>Notes</label>
+      <input type="text" id="fNotes" placeholder="Optional notes...">
+    </div>
+  </div>
+  <button class="btn-add" onclick="addTrade()">+ Add Trade</button>
+</div>
+
+<!-- TRADE LOG -->
+<div class="log-card">
+  <div class="log-header">
+    <div class="log-title">Trade Log</div>
+    <div class="filter-btns">
+      <button class="filter-btn a-active" id="fAll" onclick="filterLog('all')">All</button>
+      <button class="filter-btn" id="fForex" onclick="filterLog('forex')">Forex</button>
+      <button class="filter-btn" id="fCrypto" onclick="filterLog('crypto')">Crypto</button>
+    </div>
+  </div>
+  <div id="tableWrap"></div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+let trades = JSON.parse(localStorage.getItem('tj_trades') || '[]');
+let currentTab = 'all';
+let logFilter = 'all';
+let pieInstance = null;
+let barInstance = null;
+
+// set today as default date
+document.getElementById('fDate').value = new Date().toISOString().slice(0,10);
+
+// ── SAVE ──────────────────────────────────────────────────────────────────────
+function save() {
+  localStorage.setItem('tj_trades', JSON.stringify(trades));
+}
+
+// ── ADD TRADE ─────────────────────────────────────────────────────────────────
+function addTrade() {
+  const market  = document.getElementById('fMarket').value;
+  const pair    = document.getElementById('fPair').value.trim();
+  const date    = document.getElementById('fDate').value;
+  const result  = document.getElementById('fResult').value;
+  const pnl     = parseFloat(document.getElementById('fPnl').value);
+  const notes   = document.getElementById('fNotes').value.trim();
+
+  if (!pair || !date || isNaN(pnl)) {
+    alert('Please fill Pair, Date and P&L fields.');
+    return;
+  }
+
+  trades.unshift({ id: Date.now(), market, pair, date, result, pnl, notes });
+  save();
+  renderAll();
+
+  document.getElementById('fPair').value = '';
+  document.getElementById('fPnl').value  = '';
+  document.getElementById('fNotes').value = '';
+}
+
+// ── DELETE ────────────────────────────────────────────────────────────────────
+function deleteTrade(id) {
+  trades = trades.filter(t => t.id !== id);
+  save();
+  renderAll();
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+function calcStats(filter) {
+  const t = filter === 'all' ? trades : trades.filter(t => t.market === filter);
+  const wins   = t.filter(t => t.result === 'win').length;
+  const losses = t.filter(t => t.result === 'loss').length;
+  const total  = t.length;
+  const pnl    = t.reduce((s, t) => s + t.pnl, 0);
+  const wr     = total ? ((wins / total) * 100).toFixed(1) : 0;
+  return { wins, losses, total, pnl, wr };
+}
+
+function renderStats() {
+  const all    = calcStats('all');
+  const forex  = calcStats('forex');
+  const crypto = calcStats('crypto');
+
+  const el = document.getElementById('statsGrid');
+  el.innerHTML = `
+    <div class="stat-card neutral">
+      <div class="stat-label">Total Trades</div>
+      <div class="stat-value gold">${all.total}</div>
+    </div>
+    <div class="stat-card win">
+      <div class="stat-label">Overall P&L</div>
+      <div class="stat-value ${all.pnl >= 0 ? 'green' : 'red'}">${all.pnl >= 0 ? '+' : ''}$${all.pnl.toFixed(2)}</div>
+    </div>
+    <div class="stat-card forex">
+      <div class="stat-label">Forex Win Rate</div>
+      <div class="stat-value green">${forex.wr}%</div>
+      <div class="winrate-bar"><div class="winrate-fill" style="width:${forex.wr}%;background:var(--forex)"></div></div>
+    </div>
+    <div class="stat-card crypto">
+      <div class="stat-label">Crypto Win Rate</div>
+      <div class="stat-value blue">${crypto.wr}%</div>
+      <div class="winrate-bar"><div class="winrate-fill" style="width:${crypto.wr}%;background:var(--crypto)"></div></div>
+    </div>
+    <div class="stat-card forex">
+      <div class="stat-label">Forex P&L</div>
+      <div class="stat-value ${forex.pnl >= 0 ? 'green' : 'red'}">${forex.pnl >= 0 ? '+' : ''}$${forex.pnl.toFixed(2)}</div>
+    </div>
+    <div class="stat-card crypto">
+      <div class="stat-label">Crypto P&L</div>
+      <div class="stat-value ${crypto.pnl >= 0 ? 'green' : 'red'}">${crypto.pnl >= 0 ? '+' : ''}$${crypto.pnl.toFixed(2)}</div>
+    </div>
+  `;
+}
+
+// ── PIE CHART ─────────────────────────────────────────────────────────────────
+function renderPie() {
+  const forex  = calcStats('forex');
+  const crypto = calcStats('crypto');
+
+  const data = {
+    labels: ['Forex Wins', 'Forex Losses', 'Crypto Wins', 'Crypto Losses'],
+    datasets: [{
+      data: [forex.wins, forex.losses, crypto.wins, crypto.losses],
+      backgroundColor: ['#00e5a0','#ff4d6d','#7b6ff0','#ff8fab'],
+      borderWidth: 2,
+      borderColor: '#111318'
+    }]
+  };
+
+  const ctx = document.getElementById('pieChart').getContext('2d');
+  if (pieInstance) pieInstance.destroy();
+  pieInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: '#5a6278', font: { size: 11, family: 'Space Mono' }, padding: 14 }
+        }
+      },
+      cutout: '60%'
+    }
+  });
+}
+
+// ── BAR CHART ─────────────────────────────────────────────────────────────────
+function renderBar() {
+  const forex  = calcStats('forex');
+  const crypto = calcStats('crypto');
+
+  // Monthly grouped P&L
+  const months = {};
+  trades.forEach(t => {
+    const m = t.date.slice(0, 7);
+    if (!months[m]) months[m] = { forex: 0, crypto: 0 };
+    months[m][t.market] += t.pnl;
+  });
+
+  const labels = Object.keys(months).sort().slice(-8);
+  const fData  = labels.map(m => months[m]?.forex || 0);
+  const cData  = labels.map(m => months[m]?.crypto || 0);
+
+  const ctx = document.getElementById('barChart').getContext('2d');
+  if (barInstance) barInstance.destroy();
+  barInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels.length ? labels : ['No Data'],
+      datasets: [
+        {
+          label: 'Forex',
+          data: fData.length ? fData : [0],
+          backgroundColor: 'rgba(0,229,160,0.7)',
+          borderRadius: 4
+        },
+        {
+          label: 'Crypto',
+          data: cData.length ? cData : [0],
+          backgroundColor: 'rgba(123,111,240,0.7)',
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          labels: { color: '#5a6278', font: { size: 11, family: 'Space Mono' } }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#5a6278', font: { size: 10, family: 'Space Mono' } },
+          grid: { color: '#1e2330' }
+        },
+        y: {
+          ticks: { color: '#5a6278', font: { size: 10, family: 'Space Mono' }, callback: v => '$'+v },
+          grid: { color: '#1e2330' }
+        }
+      }
+    }
+  });
+}
+
+// ── TABLE ─────────────────────────────────────────────────────────────────────
+function renderTable() {
+  const filtered = logFilter === 'all' ? trades : trades.filter(t => t.market === logFilter);
+  const wrap = document.getElementById('tableWrap');
+
+  if (!filtered.length) {
+    wrap.innerHTML = '<div class="empty-state">No trades yet. Add your first trade above ↑</div>';
+    return;
+  }
+
+  const rows = filtered.map(t => `
+    <tr>
+      <td>${t.date}</td>
+      <td><span class="market-badge ${t.market}">${t.market.toUpperCase()}</span></td>
+      <td style="font-family:'Space Mono',monospace;font-size:0.82rem">${t.pair}</td>
+      <td><span class="result-badge ${t.result}">${t.result.toUpperCase()}</span></td>
+      <td class="${t.pnl >= 0 ? 'pnl-pos' : 'pnl-neg'}">${t.pnl >= 0 ? '+' : ''}$${t.pnl.toFixed(2)}</td>
+      <td style="color:var(--muted);font-size:0.8rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.notes || '—'}</td>
+      <td><button class="del-btn" onclick="deleteTrade(${t.id})" title="Delete">✕</button></td>
+    </tr>
+  `).join('');
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Market</th>
+          <th>Pair</th>
+          <th>Result</th>
+          <th>P&L</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+// ── TAB / FILTER ──────────────────────────────────────────────────────────────
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(b => b.className = 'tab');
+  event.target.className = `tab active-${tab}`;
+}
+
+function filterLog(f) {
+  logFilter = f;
+  document.getElementById('fAll').className   = 'filter-btn' + (f==='all'   ? ' a-active' : '');
+  document.getElementById('fForex').className = 'filter-btn' + (f==='forex' ? ' f-active' : '');
+  document.getElementById('fCrypto').className= 'filter-btn' + (f==='crypto'? ' c-active' : '');
+  renderTable();
+}
+
+// ── RENDER ALL ────────────────────────────────────────────────────────────────
+function renderAll() {
+  renderStats();
+  renderPie();
+  renderBar();
+  renderTable();
+}
+
+// ── LOAD CHART.JS ─────────────────────────────────────────────────────────────
+const script = document.createElement('script');
+script.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+script.onload = () => {
+  // seed sample data if empty
+  if (!trades.length) {
+    const today = new Date().toISOString().slice(0,10);
+    trades = [
+      { id: 1, market:'forex',  pair:'EUR/USD', date:'2025-03-10', result:'win',  pnl: 120,  notes:'Trend follow' },
+      { id: 2, market:'forex',  pair:'GBP/JPY', date:'2025-03-12', result:'loss', pnl: -60,  notes:'NFP spike' },
+      { id: 3, market:'crypto', pair:'BTC/USD', date:'2025-03-15', result:'win',  pnl: 340,  notes:'Breakout' },
+      { id: 4, market:'crypto', pair:'ETH/USD', date:'2025-03-18', result:'loss', pnl: -150, notes:'Stop hunt' },
+      { id: 5, market:'forex',  pair:'USD/JPY', date:'2025-04-02', result:'win',  pnl: 90,   notes:'' },
+      { id: 6, market:'crypto', pair:'SOL/USD', date:'2025-04-05', result:'win',  pnl: 210,  notes:'News pump' },
+      { id: 7, market:'forex',  pair:'AUD/USD', date:'2025-04-10', result:'loss', pnl: -45,  notes:'' },
+      { id: 8, market:'crypto', pair:'BTC/USD', date:'2025-04-15', result:'win',  pnl: 500,  notes:'Halving move' },
+    ];
+    save();
+  }
+  renderAll();
+};
+document.head.appendChild(script);
+</script>
+</body>
+</html>
